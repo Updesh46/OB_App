@@ -1,0 +1,80 @@
+name: Ob_App_infra
+trigger:
+ branches:
+   include:
+    - main
+
+parameters:
+  - name: environment
+    displayName: environment
+    type: string
+    default: "dev"
+    values:
+      - dev
+      - prod
+      - qa
+
+pool:
+ name: ob_app
+
+stages:
+  - stage: "terraform_init"
+    displayName: terraform_init
+    jobs:
+      - job: "securityjob"
+        displayName: securitychecktfsec
+        condition: succeeded()
+        steps:
+          - task: tfsec@1
+            inputs:
+              version: 'v1.26.0'
+              dir: '$(System.DefaultWorkingDirectory)/infra'
+                   
+          
+        
+      - job: "teraformtaskjob"
+        dependsOn: securityjob
+        steps:
+          - template: template/updeshtemplate.yaml
+          
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/infra/parentmodule'
+                          
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/infra/parentmodule'
+              environmentServiceNameAzureRM: 'ob-app'
+
+  - stage: manualvalidation
+    displayName: "manualvalidation_pipeline"
+    pool: server
+    dependsOn: terraform_init
+    jobs:
+      - job:
+        steps:
+        - task: ManualValidation@1
+          inputs:
+            notifyUsers: 'Approvers'
+            approvers: 'ob-Approvers'
+            instructions: 'Please approve the deployment to production environment.'
+            onTimeout: 'resume'
+        
+
+  - stage: "terraform_apply"
+    displayName: terraform_apply
+    jobs:
+      
+      - job: "teraformtaskjob"
+        steps:
+          - template: template/updeshtemplate.yaml
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/infra/parentmodule'
+              environmentServiceNameAzureRM: 'ob-app'

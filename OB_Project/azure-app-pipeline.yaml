@@ -1,0 +1,172 @@
+name: ob-app
+trigger: 
+ branches:
+   include:
+     - main
+
+pool:
+  name: OB-Project
+variables:
+  imagetag:  $(Build.Buildid)
+
+stages:
+  - stage: maven
+    displayName: "maven compile and test"
+    jobs:
+      - job: mavencompile
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'dev'
+              mavenPomFile: 'pom.xml'
+              goals: 'compile'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+          
+          - task: Maven@4
+            displayName: "maven test"
+            inputs:
+              azureSubscription: 'dev'
+              mavenPomFile: 'pom.xml'
+              goals: 'test'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+ 
+  - stage: sonarqube_analysis
+    displayName: "sonarqube_analysis"
+    jobs:
+      - job: sonar
+        steps:
+          - task: Maven@4
+            inputs:
+              azureSubscription: 'dev'
+              mavenPomFile: 'pom.xml'
+              goals: 'compile'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: SonarQubePrepare@8
+            displayName: "SonarQubePrepare"
+            inputs:
+              SonarQube: 'sonar'
+              scannerMode: 'cli'
+              configMode: 'manual'
+              cliProjectKey: 'updesh'
+              cliProjectName: 'updesh'
+              cliSources: '.'
+              extraProperties: |
+                sonar.verbose=true
+                sonar.java.binaries=target
+
+          - task: SonarQubeAnalyze@8
+            inputs:
+              jdkversion: 'JAVA_HOME_17_X64'
+
+          - task: SonarQubePublish@8
+            inputs:
+              pollingTimeoutSec: '300'
+
+          - task: CmdLine@2
+            displayName: trivy 
+            inputs:
+              script: 'trivy fs . --format table -o fs.html'
+
+          - task: Maven@4
+            displayName: "maven package"
+            inputs:
+              azureSubscription: 'dev'
+              mavenPomFile: 'pom.xml'
+              goals: 'package'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: MavenAuthenticate@0
+            displayName: "Maven_Authenticate"
+            inputs:
+              artifactsFeeds: 'Banking_app_project'
+
+          - task: Maven@4
+            displayName: "Maven_deploy"
+            inputs:
+              azureSubscription: 'dev'
+              mavenPomFile: 'pom.xml'
+              goals: 'deploy'
+              publishJUnitResults: true
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+
+          - task: PublishBuildArtifacts@1
+            displayName: "PublishBuildArtifacts" 
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'ob-app'
+              publishLocation: 'Container'
+
+          - task: DownloadPipelineArtifact@2
+            displayName: "Download JAR artifact"
+            inputs:
+              buildType: 'current'
+              artifactName: 'ob-app'
+              targetPath: '$(Build.SourcesDirectory)/obappJar'
+
+         
+          - task: CmdLine@2
+            displayName: "List downloaded artifacts"
+            inputs:
+              script: "ls -R $(Pipeline.Workspace)"
+               
+          - task: Docker@2
+            displayName: "buildAndPush"
+            inputs:
+              containerRegistry: 'docker container registries'
+              repository: 'bankapp'
+              command: 'buildAndPush'
+              Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+              buildContext: '$(Build.SourcesDirectory)' 
+              tags: '$(imagetag)'
+
+
+          - task: CmdLine@2
+            displayName: 'Replace __BUILD_ID__ with Build ID'
+            inputs:
+              script: | 
+                echo "Replacing image tag in k8s/app-deployment.yaml..."
+                sed -i "s/_BUILD_ID_/$(imagetag)/g" $(Build.SourcesDirectory)/k8s/app-deployment.yaml
+                pwd
+                ls -l $(Build.SourcesDirectory)/k8s
+          - task: KubernetesManifest@1
+            displayName: 'Deploy to AKS'
+            inputs:
+              action: 'deploy'
+              connectionType: 'kubernetesServiceConnection'
+              kubernetesServiceConnection: 'aksbank'
+              namespace: 'default'
+              manifests: '$(Build.SourcesDirectory)/k8s/*.yaml'
+
+          
+
+            

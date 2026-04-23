@@ -1,0 +1,44 @@
+# Git files
+.git
+.gitignore
+
+# IDE files
+.vscode
+.idea
+*.iml
+
+# Documentation
+README.md
+*.md
+
+# Build artifacts
+target/
+*.jar
+*.war
+
+# Maven local repository
+.m2
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Infrastructure files
+terraform/
+k8s/
+kubernetes/
+
+# CI/CD files
+azure-pipelines.yml

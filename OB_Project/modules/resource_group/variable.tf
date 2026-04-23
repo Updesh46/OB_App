@@ -1,6 +1,6 @@
 variable "infra" {
   description = "A map of resource groups to create."
-  type        = map(object({
+  type = map(object({
     rg_name  = string
     location = string
   }))

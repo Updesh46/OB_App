@@ -1,0 +1,11 @@
+steps:
+  
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/infra/parentmodule'
+              backendServiceArm: 'ob-app'
+              backendAzureRmStorageAccountName: 'obterraformstate'
+              backendAzureRmContainerName: 'ob-terraform-state'
+              backendAzureRmKey: 'ob.terraform.tf'

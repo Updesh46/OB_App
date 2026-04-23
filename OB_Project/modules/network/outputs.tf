@@ -10,3 +10,10 @@ output "agw_subnet_id" {
     for k, v in azurerm_subnet.agw : k => v.id
   }
 }
+
+output "spoke_vnet_id" {
+  description = "Spoke Virtual Network ID"
+  value = {
+    for k, v in azurerm_virtual_network.spoke : k => v.id
+  }
+}

@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ob-mysql-deployment
+spec:
+  selector:
+    matchLabels:
+      app: ob-mysql
+  strategy:
+    type: Recreate   
+  template:
+    metadata:
+      labels:
+        app: ob-mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+        - name: MYSQL_DATABASE
+          value: bankappdb
+        ports:
+        - containerPort: 3306

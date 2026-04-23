@@ -23,7 +23,7 @@ resource "azurerm_virtual_network" "spoke" {
 }
 
 
-#  AKS SUBNET (SPOKE)
+#  AKS SUBNET 
 
 resource "azurerm_subnet" "aks" {
   for_each = var.infra
@@ -34,12 +34,12 @@ resource "azurerm_subnet" "aks" {
   address_prefixes     = ["10.1.1.0/24"]
 }
 
-# FIREWALL SUBNET (HUB)
+# FIREWALL SUBNET HUB
 
 resource "azurerm_subnet" "firewall" {
   for_each = var.infra
 
-  name                 = "AzureFirewallSubnet"   # fixed name
+  name                 = "AzureFirewallSubnet" # fixed name
   resource_group_name  = each.value.rg_name
   virtual_network_name = azurerm_virtual_network.hub[each.key].name
   address_prefixes     = ["10.0.1.0/24"]
@@ -59,7 +59,7 @@ resource "azurerm_public_ip" "fw_ip" {
 }
 
 
-# AZURE FIREWALL
+# FIREWALL
 
 resource "azurerm_firewall" "fw" {
   for_each = var.infra
@@ -78,7 +78,7 @@ resource "azurerm_firewall" "fw" {
 }
 
 
- # HUB → SPOKE PEERING
+# HUB to SPOKE 
 
 resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   for_each = var.infra
@@ -104,7 +104,7 @@ resource "azurerm_route_table" "rt" {
 }
 
 
-# DEFAULT ROUTE → FIREWALL
+# DEFAULT ROUTE FIREWALL
 
 
 
@@ -121,9 +121,9 @@ resource "azurerm_route" "default" {
 
 
 
- # ROUTE TABLE ATTACH TO AKS SUBNET
+# ROUTE TABLE ATTACH  AKS 
 
- resource "azurerm_subnet_route_table_association" "assoc" {
+resource "azurerm_subnet_route_table_association" "assoc" {
   for_each = var.infra
 
   subnet_id      = azurerm_subnet.aks[each.key].id
