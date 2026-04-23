@@ -62,5 +62,5 @@ Feel free to contribute by submitting issues or pull requests. We welcome any im
 ## License:
 This project is licensed under the Apache License - see the [LICENSE](LICENSE) file for details. 📜
 
-**DevOps Insiders** is committed to enhancing the DevOps community with valuable resources and examples. Follow us for more tools and insights! 🌟
+**OB** is committed to enhancing the DevOps community with valuable resources and examples. Follow us for more tools and insights! 🌟
 

@@ -1,1 +1,1 @@
-# OB_App
+# Online Booking Application
