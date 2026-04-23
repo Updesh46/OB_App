@@ -17,7 +17,7 @@ variable "infra" {
       subnet_name   = string
     })
 
-    # 🔥 ADD THIS (IMPORTANT)
+  
     private_endpoint = object({
       subnet_name = string
     })
