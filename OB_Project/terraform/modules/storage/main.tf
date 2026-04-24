@@ -11,3 +11,4 @@ resource "azurerm_storage_account" "st" {
     env = each.key
   }
 }
+

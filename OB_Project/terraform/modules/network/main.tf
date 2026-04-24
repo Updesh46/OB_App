@@ -39,7 +39,7 @@ resource "azurerm_subnet" "aks" {
 resource "azurerm_subnet" "firewall" {
   for_each = var.infra
 
-  name                 = "AzureFirewallSubnet" # fixed name
+  name                 = "AzureFirewallSubnet" 
   resource_group_name  = each.value.rg_name
   virtual_network_name = azurerm_virtual_network.hub[each.key].name
   address_prefixes     = ["10.0.1.0/24"]

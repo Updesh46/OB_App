@@ -1,7 +1,7 @@
-# 1️⃣ Data block
+#  Data block
 data "azurerm_client_config" "current" {}
 
-# 2️⃣ Key Vault
+#  Key Vault
 resource "azurerm_key_vault" "kv" {
   for_each            = var.infra
   name                = each.value.keyvault.name
@@ -28,7 +28,7 @@ resource "azurerm_key_vault" "kv" {
   }
 }
 
-# 3️⃣ Private Endpoint
+#  Private Endpoint
 resource "azurerm_private_endpoint" "kv_pe" {
   for_each = var.infra
 
